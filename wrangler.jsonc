@@ -1,0 +1,9 @@
+// Cloudflare Workers config: serve the static Vite build (dist/) with no server code.
+// "name" must match the Worker's name in the Cloudflare dashboard.
+{
+  "name": "portfolio",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}

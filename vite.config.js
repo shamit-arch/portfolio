@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'node:path';
 
 // base './' so the built site works from any folder (GitHub Pages, Netlify, etc.)
 export default defineConfig({
@@ -8,10 +7,8 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 800, // three.js alone is ~600 kB
     rolldownOptions: {
-      input: {
-        main: resolve(import.meta.dirname, 'index.html'),
-        resume: resolve(import.meta.dirname, 'resume.html'),
-      },
+      // two pages: the 3D desk and the printable resume
+      input: { main: 'index.html', resume: 'resume.html' },
     },
   },
 });
