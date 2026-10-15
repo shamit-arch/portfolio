@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Interactive pixel-art 3D portfolio: projects, paintings and anime, all on one desk." />
+    <title>Shamit Patel — Portfolio</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect width='16' height='16' fill='%230d1220'/><rect x='3' y='5' width='10' height='6' fill='%23efe48c'/><rect x='5' y='7' width='6' height='2' fill='%230d1220'/></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  </head>
+  <body data-mode="intro">
+    <canvas id="gl" aria-label="Interactive 3D pixel-art desk"></canvas>
+
+    <header id="hud">
+      <div class="hud-id">
+        <div id="hud-name"></div>
+        <div id="hud-title"></div>
+      </div>
+      <div class="hud-btns">
+        <button id="btn-px" title="Pixel size">PX</button>
+        <button id="btn-music" title="Lo-fi music">♪</button>
+        <button id="btn-sound" title="Sound effects">🔊</button>
+        <button id="btn-plain" title="Plain text version">TXT</button>
+      </div>
+    </header>
+
+    <div id="hint">✦ click the painting, the laptop or the straw hat ✦<small>(the lamp, notebook &amp; headphones work too)</small></div>
+    <div id="tooltip"></div>
+    <button id="back" hidden>◀ BACK <kbd>ESC</kbd></button>
+    <div id="toast" role="status"></div>
+
+    <div id="gallery-ui" class="panel" hidden></div>
+    <div id="anime-ui" class="panel" hidden></div>
+    <div id="notebook-ui" class="panel" hidden></div>
+    <div id="os" hidden></div>
+
+    <div id="intro">
+      <div class="intro-paper">
+        <div class="intro-text">
+          <div class="intro-kicker">sketchbook · page 01</div>
+          <h1>Shamit Patel
+            <svg class="intro-underline" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
+              <path pathLength="1" d="M4 13 C 60 6, 140 4, 200 9 S 280 14, 296 6" />
+            </svg>
+          </h1>
+          <p class="intro-lines">
+            <span>I build web apps with Python &amp; Django,</span>
+            <span>draw in pencil and ink,</span>
+            <span>and collect crazy ideas in between.</span>
+          </p>
+          <div class="intro-actions">
+            <button id="intro-enter" disabled>Step into my desk <span aria-hidden="true">→</span></button>
+            <button id="intro-plain" class="intro-link">or read the quick version</button>
+          </div>
+          <p class="intro-note">psst, everything on the desk is clickable.</p>
+        </div>
+
+        <figure class="intro-sketch" aria-label="A pencil sketch of my desk">
+          <span class="tape tape-l"></span><span class="tape tape-r"></span>
+          <svg viewBox="0 0 480 360" aria-hidden="true">
+            <defs>
+              <filter id="pencil" x="-5%" y="-5%" width="110%" height="110%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n" />
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" />
+              </filter>
+              <filter id="wash" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="8" result="n" />
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="7" />
+              </filter>
+            </defs>
+
+            <!-- colour wash, fades in after the pencil lines -->
+            <g class="wash" filter="url(#wash)">
+              <rect x="125" y="70" width="70" height="80" fill="#22305e" />
+              <rect x="205" y="70" width="70" height="80" fill="#22305e" />
+              <rect x="285" y="70" width="70" height="80" fill="#22305e" />
+              <path d="M150 140 L312 80 L322 113 Z" fill="#f6c33a" />
+              <ellipse cx="325" cy="96" rx="24" ry="18" fill="#f3e98a" />
+              <path d="M310 96 l6 -4 l2 3 l3 -6 l2 4 h4 l2 -4 l3 6 l2 -3 l6 4 l-4 5 l-4 -2 l-3 5 l-3 -3 l-3 3 l-3 -5 l-4 2 Z" fill="#14161c" />
+              <ellipse cx="60" cy="165" rx="34" ry="36" fill="#e8cf9a" />
+              <ellipse cx="60" cy="165" rx="19" ry="20" fill="none" stroke="#c8262c" stroke-width="6" />
+              <path d="M75 275 L95 240 L385 240 L405 275 Z" fill="#b9bfc2" opacity="0.6" />
+              <path d="M110 262 C110 226 160 226 160 262" fill="none" stroke="#2c3b66" stroke-width="5" />
+              <ellipse cx="110" cy="264" rx="11" ry="6" fill="#2c3b66" />
+              <ellipse cx="160" cy="264" rx="11" ry="6" fill="#2c3b66" />
+              <path d="M190 250 L290 250 L296 268 L184 268 Z" fill="#2a2b30" />
+              <path d="M20 20 L70 20 L70 350 L20 350 Z M410 20 L460 20 L460 350 L410 350 Z" fill="#d9a46b" opacity="0.55" />
+            </g>
+
+            <!-- pencil lines; --d = start delay, --t = duration -->
+            <g class="lines" filter="url(#pencil)">
+              <path class="ln" pathLength="1" style="--d:0s" d="M40 30 L440 30" />
+              <path class="ln" pathLength="1" style="--d:.1s" d="M70 30 L70 350" />
+              <path class="ln" pathLength="1" style="--d:.15s" d="M410 30 L410 350" />
+              <path class="ln" pathLength="1" style="--d:.2s;--t:.4s" d="M20 190 L70 190 M20 110 L70 110" />
+              <path class="ln" pathLength="1" style="--d:.25s;--t:.4s" d="M410 120 L460 120 M410 250 L460 250" />
+              <rect class="ln" pathLength="1" style="--d:.3s;--t:.4s" x="190" y="32" width="100" height="8" />
+
+              <rect class="ln" pathLength="1" style="--d:.5s" x="125" y="70" width="70" height="80" />
+              <rect class="ln" pathLength="1" style="--d:.6s" x="205" y="70" width="70" height="80" />
+              <rect class="ln" pathLength="1" style="--d:.7s" x="285" y="70" width="70" height="80" />
+              <path class="ln" pathLength="1" style="--d:.9s" d="M150 140 L312 80 M150 141 L322 113" />
+              <ellipse class="ln" pathLength="1" style="--d:1.1s" cx="325" cy="96" rx="24" ry="18" />
+              <path class="ln" pathLength="1" style="--d:1.1s;--t:.9s" d="M127 146 v-8 h6 v-6 h7 v10 h5 v-14 h6 v18 M207 146 v-10 h8 v-5 h6 v15 h7 v-12 h6 v12 M287 146 v-6 h7 v-10 h6 v16 h8 v-8 h6 v8" />
+
+              <ellipse class="ln" pathLength="1" style="--d:1.3s" cx="60" cy="165" rx="34" ry="36" />
+              <ellipse class="ln" pathLength="1" style="--d:1.45s;--t:.4s" cx="60" cy="165" rx="19" ry="20" />
+              <ellipse class="ln" pathLength="1" style="--d:1.55s;--t:.4s" cx="60" cy="165" rx="14" ry="15" />
+
+              <path class="ln" pathLength="1" style="--d:1.5s" d="M75 275 L95 240 L385 240 L405 275 Z M75 275 L75 284 L405 284 L405 275" />
+              <path class="ln" pathLength="1" style="--d:1.7s;--t:.5s" d="M85 284 L85 345 M395 284 L395 345 M240 284 L240 345 M85 316 L395 316" />
+              <rect class="ln" pathLength="1" style="--d:1.8s;--t:.3s" x="270" y="185" width="30" height="16" />
+              <path class="ln" pathLength="1" style="--d:1.9s;--t:.6s" d="M278 194 C 276 220, 300 236, 288 246 S 240 244, 228 240 M205 240 C 180 238, 170 252, 182 259" />
+              <rect class="ln" pathLength="1" style="--d:1.9s;--t:.3s" x="205" y="235" width="23" height="8" />
+
+              <path class="ln" pathLength="1" style="--d:2s" d="M190 250 L290 250 L296 268 L184 268 Z M184 268 L184 271 L296 271 L296 268" />
+              <path class="ln" pathLength="1" style="--d:2.15s" d="M110 262 C110 226 160 226 160 262" />
+              <ellipse class="ln" pathLength="1" style="--d:2.25s;--t:.3s" cx="110" cy="264" rx="11" ry="6" />
+              <ellipse class="ln" pathLength="1" style="--d:2.3s;--t:.3s" cx="160" cy="264" rx="11" ry="6" />
+              <path class="ln" pathLength="1" style="--d:2.3s" d="M315 255 L370 251 L381 270 L322 275 Z M343 253 L351 273" />
+              <path class="ln" pathLength="1" style="--d:2.5s;--t:.4s" d="M320 260 h18 M321 264 h16 M323 268 h14 M346 263 L374 257" />
+              <circle class="ln" pathLength="1" style="--d:2.55s;--t:.3s" cx="424" cy="200" r="5" />
+            </g>
+          </svg>
+          <figcaption>my desk, ahmedabad</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <section id="plain" hidden></section>
+    <noscript>This portfolio needs JavaScript and WebGL.</noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
