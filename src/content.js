@@ -3,7 +3,7 @@
 //  Markers like <YYYY>, <github-username>, <linkedin-url> still need filling in.
 // ─────────────────────────────────────────────────────────────
 
-const GITHUB = 'https://github.com/<github-username>';
+const GITHUB = 'https://github.com/shamit-arch';
 
 export const profile = {
   name: 'Shamit Patel',
@@ -21,9 +21,9 @@ export const profile = {
 
 export const contact = [
   { label: 'Email', value: 'patelshamit1911@gmail.com', href: 'mailto:patelshamit1911@gmail.com' },
-  { label: 'GitHub', value: 'github.com/<github-username>', href: GITHUB },
-  { label: 'LinkedIn', value: 'linkedin.com/in/<linkedin-url>', href: 'https://linkedin.com/in/<linkedin-url>' },
-  { label: 'Instagram (art)', value: '@shamit19.11', href: 'https://instagram.com/shamit19.11' },
+  { label: 'GitHub', value: 'github.com/shamit-arch', href: GITHUB },
+  { label: 'LinkedIn', value: 'linkedin.com/in/shamit-patel-683366387 ', href: 'https://linkedin.com/in/shamit-patel-683366387' },
+  { label: 'Instagram (art)', value: '@shamit.1911', href: 'https://instagram.com/shamit.1911' },
 ];
 
 export const education = [
@@ -45,7 +45,7 @@ export const experience = [
   {
     role: 'Freelance Web Developer',
     org: 'Internal tool for a company team (details under NDA)',
-    years: '<YYYY> – present',
+    years: '2025 – present',
     points: [
       "Building a deployable web app that streamlines a team's repetitive cross-checking and verification work.",
       'Delivered and demoed the first module, an inventory management app on SQLite.',
@@ -75,10 +75,9 @@ export const resume = {
     { name: 'Tools', items: ['Git & GitHub', 'Claude', 'Gemini API', 'VS Code'] },
     { name: 'Strengths', items: ['Deep focus', 'Problem solving', 'Honest communication', 'Supportive teammate'] },
   ],
-  interests: 'Pencil & ink sketching, acrylic painting and digital character design (Instagram @shamit19.11) · anime · DIY repairs and tinkering',
+  interests: 'Pencil & ink sketching, acrylic painting and digital character design (Instagram @shamit.1911) · anime · DIY repairs and tinkering',
 };
 
-// thumb: optional image path in /public (e.g. './projects/foo.png'). Without one, a pixel thumbnail is generated.
 export const projects = [
   {
     title: 'Workflow & Inventory App',
@@ -87,14 +86,14 @@ export const projects = [
     description: "A real-world web app for a company team that replaces repetitive verification steps. The first module, inventory management, is done and has been demoed. It's private (NDA), so no link.",
     links: [],
     color: '#6bbf59',
-    onResume: false, // already listed under Experience
+    onResume: false, 
   },
   {
     title: 'Talk2Anyone',
     year: 'Diploma',
     tags: ['AI', 'Computer vision', 'Web app'],
     description: 'An AI-powered American Sign Language translator that turns signs into text so deaf and hearing people can talk more easily. My diploma final-year project.',
-    links: [{ label: 'GitHub', href: GITHUB }],
+    links: [{ label: 'GitHub', href:"https://github.com/shamit-arch/talk2anyone" }],
     color: '#3a6ea5',
   },
   {
@@ -110,14 +109,14 @@ export const projects = [
     year: '',
     tags: ['Gemini API', 'Frontend'],
     description: 'Tell it what you want to build and it recommends the languages and frameworks to use, powered by Google Gemini.',
-    links: [{ label: 'GitHub', href: GITHUB }],
+    links: [{ label: 'GitHub', href: "https://github.com/shamit-arch/devcompass" }],
     color: '#8a5cd6',
   },
   {
-    title: 'AI Ad Blocker',
+    title: 'A Blocker',
     year: '',
     tags: ['Browser extension', 'AI'],
-    description: 'A browser extension that uses AI to spot and hide ads that ordinary filter lists miss.',
+    description: 'A browser extension that spots and hides AI Content that ordinary filter lists miss.',
     links: [{ label: 'GitHub', href: GITHUB }],
     color: '#d0343a',
   },
@@ -126,7 +125,7 @@ export const projects = [
     year: '',
     tags: ['Web app', 'Productivity'],
     description: 'A web interface that formats college practicals and assignments into clean, submission-ready documents in seconds.',
-    links: [{ label: 'GitHub', href: GITHUB }],
+    links: [{ label: 'GitHub', href: "https://github.com/shamit-arch/practical-submiter" }],
     color: '#2aa198',
   },
   {
@@ -134,51 +133,43 @@ export const projects = [
     year: '2026',
     tags: ['Three.js', 'GLSL', 'Vite'],
     description: 'This very portfolio: my real desk rebuilt as a pixel-art 3D scene, with a working mini OS on the laptop.',
-    links: [{ label: 'GitHub', href: GITHUB }],
     color: '#e0302f',
   },
 ];
 
-// Paintings shown on the wall frames (three panels).
-//   layout: 'triptych' → one painting stretched across all three panels
-//   layout: 'single'   → one painting per panel; consecutive singles are hung three at a time
-// Source, either:
-//   { src: './paintings/my-drawing.jpg' }  → your real artwork (put files in /public/paintings). Defaults to 'single'.
-//   { procedural: ... }                    → placeholder drawn in code:
-//        triptych: 'batsignal' | 'sunset' | 'sakura' | 'starry' | 'rain'    single: 'strawhat' | 'moon' | 'koi'
+// What hangs on the wall frames (shown pixelated, like the rest of the room).
+//   layout: 'triptych' → one image split across all three panels
+//   layout: 'single'   → one image per panel; consecutive singles are hung three at a time
 export const paintings = [
-  { title: 'Gotham Calling', year: 2023, medium: 'Acrylic on 3 canvas boards', procedural: 'batsignal', layout: 'triptych',
+  { title: 'Gotham Calling', year: 2023, medium: 'Acrylic on 3 canvas boards', src: './paintings/gotham-calling.jpg', layout: 'triptych',
     note: 'The triptych that actually hangs above my desk.' },
-  { title: 'Merry at Dusk', year: 2024, medium: 'Acrylic', procedural: 'sunset', layout: 'triptych',
-    note: 'A tiny ship sailing toward the Grand Line.' },
-  { title: 'The Hat', year: 2025, medium: 'Acrylic on canvas board', procedural: 'strawhat', layout: 'single',
-    note: 'A tribute to a certain rubber captain.' },
-  { title: 'Paper Moon', year: 2024, medium: 'Gouache', procedural: 'moon', layout: 'single',
-    note: 'Quiet night, one small boat.' },
-  { title: 'Koi Pond', year: 2023, medium: 'Watercolour', procedural: 'koi', layout: 'single',
-    note: 'Painted from a temple garden visit.' },
-  { title: 'Sakura Peak', year: 2024, medium: 'Gouache', procedural: 'sakura', layout: 'triptych',
-    note: 'Spring in the mountains.' },
-  { title: 'Night Swirl', year: 2022, medium: 'Oil pastel', procedural: 'starry', layout: 'triptych',
-    note: 'Studying Van Gogh, badly and happily.' },
-  { title: 'Neon Rain', year: 2025, medium: 'Digital', procedural: 'rain', layout: 'triptych',
-    note: 'Lo-fi city nights.' },
+];
+
+// The laptop's drawings/ folder, shown at full resolution.
+// To add one: put the image in /public/paintings and add a line here.
+export const drawings = [
+  { title: 'Gotham Calling', medium: 'Acrylic on 3 canvas boards', year: 2023, src: './paintings/gotham-calling.jpg' },
+  { title: 'Sketch 01', src: './paintings/sketch-01.jpg' },
+  { title: 'Sketch 02', src: './paintings/sketch-02.jpg' },
+  { title: 'Sketch 03', src: './paintings/sketch-03.jpg' },
+  { title: 'Sketch 04', src: './paintings/sketch-04.jpg' },
+  { title: 'Sketch 05', src: './paintings/sketch-05.jpg' },
+  { title: 'Sketch 06', src: './paintings/sketch-06.jpg' },
+  { title: 'Sketch 07', src: './paintings/sketch-07.jpg' },
+  { title: 'Sketch 08', src: './paintings/sketch-08.jpg' },
 ];
 
 // status: 'watching' | 'completed' | 'plan' | 'dropped'   rating: 0-10
 export const anime = [
-  { title: 'One Piece', status: 'watching', rating: 10, fav: 'Monkey D. Luffy', note: 'The hat on my wall says it all.' },
-  { title: 'Fullmetal Alchemist: Brotherhood', status: 'completed', rating: 10, fav: 'Roy Mustang' },
-  { title: 'Attack on Titan', status: 'completed', rating: 9, fav: 'Levi Ackerman' },
+  { title: 'One Piece', status: 'watching', rating: 10, fav: 'Monkey D. Luffy', 
+    note: 'The hat on my wall says it all.' },
+  { title: 'Naruto Shippuden', status: 'completed', rating: 10, fav: 'Jiraya Sensei' },
   { title: 'Vinland Saga', status: 'completed', rating: 9, fav: 'Thorfinn' },
-  { title: 'Jujutsu Kaisen', status: 'watching', rating: 8, fav: 'Gojo Satoru' },
-  { title: 'Frieren: Beyond Journey\'s End', status: 'completed', rating: 10, fav: 'Frieren' },
+  { title: 'Jujutsu Kaisen', status: 'completed', rating: 6, fav: 'Gojo Satoru' },
   { title: 'Death Note', status: 'completed', rating: 9, fav: 'L' },
-  { title: 'Naruto Shippuden', status: 'completed', rating: 8, fav: 'Itachi Uchiha' },
-  { title: 'Demon Slayer', status: 'completed', rating: 8, fav: 'Tanjiro Kamado' },
-  { title: 'Chainsaw Man', status: 'watching', rating: 8, fav: 'Power' },
-  { title: 'Spy x Family', status: 'plan', rating: 0, fav: 'Anya' },
-  { title: 'Monster', status: 'plan', rating: 0, fav: '—' },
+  { title: 'Demon Slayer', status: 'completed', rating: 10, fav: 'Gyomei Himejima' },
+  { title: 'Chainsaw Man', status: 'completed', rating: 8, fav: 'Kishibe' },
+  { title: 'Monster', status: 'completed', rating: 10, fav: 'Johan Libert' },
 ];
 
 // The notebook on the desk: a "/now" page.

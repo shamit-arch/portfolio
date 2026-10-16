@@ -97,7 +97,7 @@ export function createOS(root, opts) {
         <div class="ex-grid wide">
           ${art.map((p, i) => `
             <button class="ex-item" data-painting="${i}">
-              <span class="ex-thumb"><img class="pix" src="${p.thumb()}" alt=""></span>
+              <span class="ex-thumb"><img class="${p.pixelated ? 'pix' : ''}" src="${p.thumb()}" alt="${esc(p.title)}" decoding="async"></span>
               <span>${esc(p.title)}</span>
             </button>`).join('')}
         </div>`,
@@ -203,7 +203,7 @@ export function createOS(root, opts) {
           <button data-v="next" title="Next">▶</button>
           <span class="vw-name"></span>
           <button data-v="zoom" title="Fit / actual size">⤢ ZOOM</button>
-          <button data-v="wall" title="Hang it on the wall">ON WALL</button>
+          <a class="vw-open" data-v="open" target="_blank" rel="noopener" title="Open the original file">OPEN ORIGINAL ↗</a>
         </div>
         <div class="vw-stage"><img alt=""></div>
         <div class="vw-caption"></div>
@@ -217,7 +217,6 @@ export function createOS(root, opts) {
           if (v === 'prev') showArt(viewing - 1);
           if (v === 'next') showArt(viewing + 1);
           if (v === 'zoom') body.querySelector('.vw-stage').classList.toggle('actual');
-          if (v === 'wall') shutdown(() => opts.onOpenGallery(viewing));
         });
         body.querySelector('.vw-stage').addEventListener('dblclick', (e) => e.currentTarget.classList.toggle('actual'));
       },
@@ -231,6 +230,7 @@ export function createOS(root, opts) {
     const body = win.el.querySelector('.win-body');
     const img = body.querySelector('.vw-stage img');
     img.src = p.full();
+    body.querySelector('.vw-open').href = p.full();
     img.classList.toggle('pix', p.pixelated);
     body.querySelector('.vw-name').textContent = `${viewing + 1}/${art.length}  ${p.title}`;
     body.querySelector('.vw-caption').textContent = [p.medium, p.year, p.note].filter(Boolean).join(' · ');

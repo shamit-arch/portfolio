@@ -184,6 +184,8 @@ body[data-mode='laptop'] #back { top: 8px; }
 .gal-meta { font-size: 20px; }
 .gal-note { margin: 4px 0 0; font-size: 20px; color: var(--muted); }
 .gal-orig { color: var(--yellow-2); font-size: 18px; }
+.gal-hint { margin: 6px 0 0; font-size: 18px; color: var(--yellow-2); }
+#gallery-ui.single { grid-template-columns: 1fr; width: min(520px, calc(100vw - 32px)); margin-left: calc(min(520px, calc(100vw - 32px)) / -2); }
 .gal-tabs { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 .gal-tabs button {
   border: 0;
@@ -407,8 +409,11 @@ body[data-mode='laptop'] #back { top: 8px; }
 .ex-grid.wide { grid-template-columns: repeat(auto-fill, minmax(8em, 1fr)); }
 .ex-item { background: none; border: 1px dotted transparent; display: grid; gap: 0.2em; justify-items: center; padding: 0.3em; color: #111; line-height: 1; text-align: center; }
 .ex-item img { width: 100%; image-rendering: pixelated; border: 2px solid #111; }
-.ex-thumb { width: 100%; height: 5.5em; display: grid; place-items: center; background: #e9e9e9; }
-.ex-thumb img { width: auto; height: auto; max-width: 100%; max-height: 100%; }
+.ex-thumb { width: 100%; height: 6em; display: block; background: #e9e9e9; overflow: hidden; }
+/* whole image inside a fixed box, whatever its shape */
+.ex-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; border: 0; }
+.ex-grid.wide .ex-item span:last-child { padding-top: 0.25em; }
+.ex-item img:not(.pix), .vw-stage img:not(.pix) { image-rendering: auto; }
 .ex-item:hover { background: #dde8ff; border-color: #2f5fb3; }
 
 .pj { display: flex; gap: 0.8em; padding: 0.7em; }
@@ -449,8 +454,9 @@ body[data-mode='laptop'] #back { top: 8px; }
 
 .vw { display: flex; flex-direction: column; height: 100%; background: #1a1c22; color: #ddd; }
 .vw-tools { display: flex; align-items: center; gap: 0.3em; padding: 0.25em; background: #c9c9c9; color: #000; border-bottom: 1px solid #6c6c6c; }
-.vw-tools button { border: 1px solid #000; background: #c9c9c9; box-shadow: inset -2px -2px 0 #6c6c6c, inset 2px 2px 0 #fff; padding: 0 0.6em; }
-.vw-tools button:active { box-shadow: inset 2px 2px 0 #6c6c6c; }
+.vw-tools .vw-open { color: #000; text-decoration: none; font-size: 0.9em; }
+.vw-tools button, .vw-tools .vw-open { border: 1px solid #000; background: #c9c9c9; box-shadow: inset -2px -2px 0 #6c6c6c, inset 2px 2px 0 #fff; padding: 0 0.6em; }
+.vw-tools button:active, .vw-tools .vw-open:active { box-shadow: inset 2px 2px 0 #6c6c6c; }
 .vw-name { flex: 1; padding: 0 0.5em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vw-stage {
   flex: 1;
@@ -461,11 +467,22 @@ body[data-mode='laptop'] #back { top: 8px; }
   overflow: auto;
   background: repeating-conic-gradient(#22252d 0 25%, #1c1f26 0 50%) 0 0 / 16px 16px;
   cursor: zoom-in;
+  position: relative;
 }
-.vw-stage img { max-width: 100%; max-height: 100%; width: auto; height: 100%; object-fit: contain; box-shadow: 0 0 0 3px #000, 6px 6px 0 rgba(0, 0, 0, 0.5); }
-.vw-stage.actual { place-items: start; cursor: zoom-out; }
-.vw-stage.actual img { max-width: none; max-height: none; height: auto; width: 250%; }
-.vw-stage.actual img:not(.pix) { width: auto; } /* real artwork: natural resolution */
+/* fit the whole image inside the stage */
+.vw-stage img {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: calc(100% - 1.2em);
+  max-height: calc(100% - 1.2em);
+  width: auto;
+  height: auto;
+  box-shadow: 0 0 0 3px #000, 6px 6px 0 rgba(0, 0, 0, 0.5);
+}
+/* zoom: actual size, scroll to pan */
+.vw-stage.actual { display: block; cursor: zoom-out; }
+.vw-stage.actual img { position: static; margin: 0; max-width: none; max-height: none; }
 .vw-caption { padding: 0.3em 0.6em; background: #111; color: #f2b233; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tm { background: #0b0f0b; color: #3fd46b; height: 100%; display: flex; flex-direction: column; padding: 0.4em 0.6em; }
 .tm-out { flex: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.1; }

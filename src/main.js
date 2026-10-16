@@ -213,11 +213,12 @@ createPlain($('#plain'), content);
 const os = createOS(ui.os, {
   content,
   sfx,
-  art: art.map((a) => ({
-    title: a.title, medium: a.medium, year: a.year, note: a.note, layout: a.layout,
-    thumb: () => a.canvas.toDataURL(),
-    full: () => a.src || a.canvas.toDataURL(),
-    pixelated: !a.src,
+  // the laptop shows the real drawings at full resolution (the wall stays pixelated)
+  art: (content.drawings || []).map((d) => ({
+    title: d.title, medium: d.medium, year: d.year, note: d.note,
+    thumb: () => d.src,
+    full: () => d.src,
+    pixelated: false,
   })),
   onPower: (on) => setLaptopPower(on),
   onShutdown: (after) => closeLaptop(after),

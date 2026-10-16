@@ -17,6 +17,7 @@ export function createGallery(el, slides, { onSlide, onSelect }) {
       <div class="gal-meta"></div>
       <p class="gal-note"></p>
       <a class="gal-orig" target="_blank" rel="noopener" hidden>view original ↗</a>
+      <p class="gal-hint">More of my drawings are on the laptop → drawings/</p>
     </div>
     <button class="gal-arrow" data-dir="1" aria-label="Next">▶</button>`;
   const q = (s) => el.querySelector(s);
@@ -29,6 +30,10 @@ export function createGallery(el, slides, { onSlide, onSelect }) {
   function render() {
     const s = slides[slide];
     const p = s.items[item];
+    const many = slides.length > 1;
+    el.classList.toggle('single', !many);
+    el.querySelectorAll('.gal-arrow').forEach((b) => (b.hidden = !many));
+    q('.gal-count').hidden = !many;
     q('.gal-count').textContent = `${String(slide + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}${s.type === 'trio' ? ' · set of ' + s.items.length : ''}`;
     const tabs = q('.gal-tabs');
     tabs.hidden = s.type !== 'trio' || s.items.length < 2;
@@ -155,8 +160,8 @@ export function createPlain(el, c) {
         <p>${(p.links || []).map((l) => `<a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join(' ')}</p></article>`).join('')}
       <h2>Skills</h2>
       <ul>${c.skills.map((s) => `<li>${esc(s.name)} — ${s.level}/10</li>`).join('')}</ul>
-      <h2>Paintings</h2>
-      <ul>${c.paintings.map((p) => `<li><b>${esc(p.title)}</b> — ${esc([p.medium, p.year].filter(Boolean).join(', '))}</li>`).join('')}</ul>
+      <h2>Drawings &amp; paintings</h2>
+      <ul>${(c.drawings || []).map((p) => `<li><a href="${esc(p.src)}" target="_blank" rel="noopener">${esc(p.title)}</a>${p.medium ? ` — ${esc([p.medium, p.year].filter(Boolean).join(', '))}` : ''}</li>`).join('')}</ul>
       <h2>Anime</h2>
       <ul>${c.anime.map((a) => `<li>${esc(a.title)} — ${esc(STATUS[a.status] || a.status)}${a.status !== 'plan' ? ` (${a.rating}/10)` : ''}</li>`).join('')}</ul>
       <h2>Contact</h2>
