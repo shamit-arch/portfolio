@@ -4,6 +4,7 @@ import * as content from './content.js';
 import { buildDesk, WALL_Z, LAPTOP_SCALE } from './scene/desk.js';
 import { paintingCanvas, blankCanvas } from './scene/paintings.js';
 import { PixelPass } from './fx/pixelPass.js';
+import { createMonitorScreen, MODES as MONITOR_MODES } from './scene/monitor.js';
 import { createOS } from './ui/os.js';
 import { createGallery, createAnimeLog, createNotebook, createPlain } from './ui/panels.js';
 import { sfx, music, setMuted, isMuted } from './audio.js';
@@ -44,6 +45,9 @@ glow.position.set(0.3, 1.6, -0.15);
 scene.add(glow);
 const screenLight = new THREE.PointLight('#8fd0ff', 0, 0.8, 1.5);
 scene.add(screenLight);
+const monitorGlow = new THREE.PointLight('#9fc4ff', 0, 0.9, 1.5); // the wall monitor lights the wall at night
+monitorGlow.position.copy(desk.monitor.group.position).add(new THREE.Vector3(0, 0, 0.12));
+scene.add(monitorGlow);
 
 // dust in the lamp light
 const DUST = 140;
@@ -185,6 +189,14 @@ function notebookView() {
   return { pos: target.clone().add(new THREE.Vector3(0, d * 0.85, d * 0.55)), target };
 }
 
+function monitorView() {
+  const center = desk.monitor.screen.getWorldPosition(new THREE.Vector3());
+  const narrow = camera.aspect < 0.9;
+  const target = center.clone().add(new THREE.Vector3(0, narrow ? -0.08 : -0.045, 0));
+  const d = fitDistance(0.168 * 1.3 * 1.25, narrow ? 0.26 : 0.21);
+  return { pos: target.clone().add(new THREE.Vector3(0, 0, d)), target };
+}
+
 function flyTo(viewFn, dur = 1.1) {
   currentView = viewFn;
   const v = viewFn();
@@ -200,6 +212,7 @@ function flyTo(viewFn, dur = 1.1) {
 const ui = {
   back: $('#back'), hint: $('#hint'), tooltip: $('#tooltip'), toast: $('#toast'),
   gallery: $('#gallery-ui'), anime: $('#anime-ui'), notebook: $('#notebook-ui'), os: $('#os'),
+  monitor: $('#monitor-ui'),
 };
 $('#hud-name').textContent = content.profile.name;
 $('#hud-title').textContent = content.profile.title;
@@ -260,6 +273,7 @@ async function goHome() {
   sfx('close');
   if (was === 'painting') hidePanel(ui.gallery);
   if (was === 'notebook') hidePanel(ui.notebook);
+  if (was === 'monitor') hidePanel(ui.monitor);
   if (was === 'hat') {
     hidePanel(ui.anime);
     returnHat();
@@ -367,15 +381,68 @@ async function enterNotebook() {
   if (mode === 'notebook') showPanel(ui.notebook);
 }
 
+// wall monitor
+const monitorScreen = createMonitorScreen({
+  ctx: desk.monitor.ctx,
+  texture: desk.monitor.texture,
+  onTimerEnd: (phase) => {
+    sfx('chime');
+    toast(phase === 'focus' ? 'Focus session done! Take a 5 minute break.' : 'Break over. Back to deep focus.');
+    renderMonitorUI();
+  },
+});
+function renderMonitorUI() {
+  const m = monitorScreen.mode;
+  ui.monitor.querySelector('.gal-count').textContent = `MODE ${m + 1} / ${MONITOR_MODES.length}`;
+  ui.monitor.querySelector('.gal-title').textContent = MONITOR_MODES[m].name;
+  ui.monitor.querySelector('.gal-meta').textContent = MONITOR_MODES[m].desc;
+  const actions = ui.monitor.querySelector('.mon-actions');
+  actions.hidden = m !== 1;
+  actions.querySelector('[data-t="toggle"]').textContent = monitorScreen.timer.running ? 'Pause' : 'Start';
+}
+ui.monitor.innerHTML = `
+  <button class="gal-arrow" data-m="-1" aria-label="Previous screen">◀</button>
+  <div class="gal-info">
+    <div class="gal-count"></div>
+    <h2 class="gal-title"></h2>
+    <div class="gal-meta"></div>
+    <div class="mon-actions" hidden>
+      <button data-t="toggle">Start</button><button data-t="reset">Reset</button>
+    </div>
+  </div>
+  <button class="gal-arrow" data-m="1" aria-label="Next screen">▶</button>`;
+ui.monitor.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.m) monitorScreen.next(+b.dataset.m);
+  if (b.dataset.t === 'toggle') monitorScreen.timer.toggle();
+  if (b.dataset.t === 'reset') monitorScreen.timer.reset();
+  sfx('click');
+  renderMonitorUI();
+});
+renderMonitorUI();
+async function enterMonitor() {
+  setMode('monitor');
+  sfx('open');
+  await flyTo(monitorView);
+  if (mode === 'monitor') showPanel(ui.monitor);
+}
+function clickMonitor() {
+  if (monitorScreen.mode === 1) monitorScreen.timer.toggle();
+  else monitorScreen.next();
+  sfx('click');
+  renderMonitorUI();
+}
+
 let night = false;
 function toggleNight() {
   night = !night;
   sfx('click');
   document.body.classList.toggle('night', night);
   const to = night
-    ? { hemi: 0.25, sun: 0.15, lamp: 0, glow: 1.4, emis: 0, bright: 1.05, bg: '#0b0a10' }
-    : { hemi: 1.5, sun: 2.2, lamp: 3, glow: 0, emis: 0.6, bright: 0.9, bg: '#231d1a' };
-  const from = { hemi: hemi.intensity, sun: sun.intensity, lamp: lampLight.intensity, glow: glow.intensity, emis: desk.lamp.mat.emissiveIntensity, bright: panels[0].uniforms.uBright.value };
+    ? { hemi: 0.25, sun: 0.15, lamp: 0, glow: 1.4, mon: 0.9, emis: 0, bright: 1.05, bg: '#0b0a10' }
+    : { hemi: 1.5, sun: 2.2, lamp: 3, glow: 0, mon: 0, emis: 0.6, bright: 0.9, bg: '#231d1a' };
+  const from = { hemi: hemi.intensity, sun: sun.intensity, lamp: lampLight.intensity, glow: glow.intensity, mon: monitorGlow.intensity, emis: desk.lamp.mat.emissiveIntensity, bright: panels[0].uniforms.uBright.value };
   const bg0 = scene.background.clone(), bg1 = new THREE.Color(to.bg);
   const L = THREE.MathUtils.lerp;
   tween(0.6, (e) => {
@@ -383,6 +450,7 @@ function toggleNight() {
     sun.intensity = L(from.sun, to.sun, e);
     lampLight.intensity = L(from.lamp, to.lamp, e);
     glow.intensity = L(from.glow, to.glow, e);
+    monitorGlow.intensity = L(from.mon, to.mon, e);
     desk.lamp.mat.emissiveIntensity = L(from.emis, to.emis, e);
     panels.forEach((m) => (m.uniforms.uBright.value = L(from.bright, to.bright, e)));
     scene.background.lerpColors(bg0, bg1, e);
@@ -399,12 +467,14 @@ function onObject(id, hit) {
     return gallery.next();
   }
   if (mode === 'laptop' && hit?.object.userData.power) return os.boot();
+  if (mode === 'monitor' && id === 'monitor') return clickMonitor();
   if (mode !== 'home') return;
   switch (id) {
     case 'painting': return enterPainting();
     case 'laptop': return enterLaptop();
     case 'hat': return enterHat();
     case 'notebook': return enterNotebook();
+    case 'monitor': return enterMonitor();
     case 'lamp': return toggleNight();
     case 'headphones': {
       const on = music.toggle();
@@ -464,6 +534,7 @@ function allowedHover(hit) {
   if (mode === 'home') return id;
   if (mode === 'painting' && id === 'painting') return id;
   if (mode === 'laptop' && hit.object.userData.power && os.state === 'off') return id;
+  if (mode === 'monitor' && id === 'monitor') return id;
   return null;
 }
 
@@ -491,6 +562,10 @@ ui.back.addEventListener('click', goHome);
 addEventListener('keydown', (e) => {
   if (e.target.closest?.('input, textarea')) return;
   if (e.key === 'Escape' && mode !== 'home' && mode !== 'intro') goHome();
+  if (mode === 'monitor' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+    monitorScreen.next(e.key === 'ArrowRight' ? 1 : -1);
+    renderMonitorUI();
+  }
   if (mode === 'painting' && e.key === 'ArrowRight') gallery.next();
   if (mode === 'painting' && e.key === 'ArrowLeft') gallery.prev();
 });
@@ -606,6 +681,7 @@ function frame() {
   desk.headphones.position.y = desk.headphones.userData.baseY + (music.playing && !reduceMotion ? Math.abs(Math.sin(t * Math.PI * 1.3)) * 0.006 : 0);
   desk.laptop.powerBtn.material.emissive.setRGB(...(mode === 'laptop' && os.state === 'off' ? [0.2 + Math.sin(t * 5) * 0.2, 0.25, 0.1] : [0, 0, 0]));
 
+  monitorScreen.draw(t);
   pixel.render(scene, camera);
   if (mode === 'laptop' && !ui.os.hidden) updateOsRect();
   requestAnimationFrame(frame);

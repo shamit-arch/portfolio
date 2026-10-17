@@ -154,7 +154,7 @@ body[data-mode='laptop'] #back { top: 8px; }
 .panel.visible { opacity: 1; transform: none; }
 
 /* gallery caption */
-#gallery-ui {
+#gallery-ui, #monitor-ui {
   left: 50%;
   bottom: 20px;
   width: min(640px, calc(100vw - 32px));
@@ -185,6 +185,17 @@ body[data-mode='laptop'] #back { top: 8px; }
 .gal-note { margin: 4px 0 0; font-size: 20px; color: var(--muted); }
 .gal-orig { color: var(--yellow-2); font-size: 18px; }
 .gal-hint { margin: 6px 0 0; font-size: 18px; color: var(--yellow-2); }
+.mon-actions { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+.mon-actions button {
+  font-family: var(--pixel);
+  font-size: 10px;
+  padding: 8px 14px;
+  border: 0;
+  background: var(--yellow);
+  color: var(--ink);
+  box-shadow: inset -3px -3px 0 #b57d16, inset 3px 3px 0 #ffd979;
+}
+.mon-actions button + button { background: var(--navy-2); color: var(--paper); box-shadow: inset -3px -3px 0 #0a0d1c; }
 #gallery-ui.single { grid-template-columns: 1fr; width: min(520px, calc(100vw - 32px)); margin-left: calc(min(520px, calc(100vw - 32px)) / -2); }
 .gal-tabs { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 .gal-tabs button {
@@ -741,7 +752,8 @@ body[data-mode='laptop'] #back { top: 8px; }
   #back { top: auto; bottom: 16px; }
   body[data-mode='laptop'] #back { top: auto; bottom: 6px; }
   body[data-mode='painting'] #back { top: 64px; bottom: auto; }
-  #gallery-ui { grid-template-columns: 44px 1fr 44px; bottom: 16px; }
+  #gallery-ui, #monitor-ui { grid-template-columns: 44px 1fr 44px; bottom: 16px; }
+  body[data-mode='monitor'] #back { top: 64px; bottom: auto; }
   .gal-title { font-size: 12px; }
   #anime-ui, #notebook-ui {
     left: 16px;

@@ -5,6 +5,7 @@ import {
 } from './textures.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { panelMaterial } from './paintings.js';
+import { SCREEN_W, SCREEN_H } from './monitor.js';
 
 const gradient = toonGradient();
 export const toon = (opts) => new THREE.MeshToonMaterial({ gradientMap: gradient, ...opts });
@@ -145,6 +146,33 @@ export function buildDesk(scene) {
   scene.add(box(0.11, 0.032, 0.055, toon({ color: '#1b1b1d' }), -0.14, DESK_Y + 0.016, -0.25));
   scene.add(tube([[0.175, 1.1, -0.32], [0.18, 0.98, -0.32], [0.24, 0.85, -0.33], [0.25, 0.76, -0.3], [0.05, 0.756, -0.31], [-0.08, 0.758, -0.27]], 0.005, cableMat));
   scene.add(tube([[-0.2, 0.758, -0.25], [-0.36, 0.756, -0.2], [-0.42, 0.756, -0.05], [-0.36, 0.756, 0.02], [-0.38, 0.756, -0.08], [-0.3, 0.756, -0.02], [-0.24, 0.762, 0.0]], 0.0045, cableMat));
+
+  // ── wall-mounted portable monitor ────────────────────────
+  const monitor = new THREE.Group();
+  const SCR_W = 0.336, SCR_H = 0.189, TOP = 0.012, CHIN = 0.03;
+  const bezel = new THREE.Mesh(new RoundedBoxGeometry(SCR_W + 0.024, SCR_H + TOP + CHIN, 0.012, 3, 0.004), toon({ color: '#151619' }));
+  bezel.castShadow = bezel.receiveShadow = true;
+  monitor.add(bezel);
+  const [monCanvas, monCtx] = canvas(SCREEN_W, SCREEN_H);
+  const monTex = toTexture(monCanvas);
+  const monScreen = new THREE.Mesh(new THREE.PlaneGeometry(SCR_W, SCR_H), new THREE.MeshBasicMaterial({ map: monTex }));
+  monScreen.position.set(0, (CHIN - TOP) / 2, 0.0062);
+  monitor.add(monScreen);
+  const [logoCanvas, logoCtx] = canvas(96, 12);
+  logoCtx.fillStyle = '#151619';
+  logoCtx.fillRect(0, 0, 96, 12);
+  logoCtx.fillStyle = '#9a9ca4';
+  logoCtx.font = 'bold 9px Arial, sans-serif';
+  logoCtx.textAlign = 'center';
+  logoCtx.fillText('ZEBRONICS', 48, 9);
+  const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.072, 0.009), new THREE.MeshBasicMaterial({ map: toTexture(logoCanvas) }));
+  logo.position.set(0, -(SCR_H + TOP + CHIN) / 2 + CHIN / 2, 0.0062);
+  monitor.add(logo);
+  monitor.scale.setScalar(1.3); // ~15.6" portable monitor, ends just left of the socket
+  monitor.position.set(-0.105, 1.115, WALL_Z + 0.009);
+  scene.add(register(monitor, 'monitor', 'Monitor — click to switch'));
+  // USB-C cable from the monitor's left edge down behind the laptop
+  scene.add(tube([[-0.33, 1.0, -0.344], [-0.35, 0.95, -0.335], [-0.3, 0.85, -0.33], [-0.21, 0.772, -0.3], [-0.14, 0.758, -0.2], [-0.12, 0.764, -0.1]], 0.004, cableMat));
 
   // ── laptop (ThinkPad-ish; more detail than the rest of the room) ──
   const laptop = new THREE.Group();
@@ -313,6 +341,7 @@ export function buildDesk(scene) {
   return {
     interactive,
     painting,
+    monitor: { group: monitor, screen: monScreen, ctx: monCtx, texture: monTex },
     laptop: { group: laptop, lidPivot, screen, screenCanvas, screenCtx, screenTex, powerBtn, led, dot },
     hat: { pivot: hatPivot, inner: hat, home: hatPivot.position.clone(), homeRot: hatPivot.rotation.clone() },
     lamp: { mesh: lamp, mat: lampMat },
