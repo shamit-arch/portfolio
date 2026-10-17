@@ -30,13 +30,13 @@ export const education = [
   {
     degree: 'B.Tech, Computer Science & Engineering (lateral entry)',
     school: 'GLS University, Ahmedabad',
-    years: '<YYYY> – <YYYY>',
+    years: '2026 – Present',
     notes: 'Currently in 2nd year. Building Snap-n-Build for an investor pitch, plus two capstone projects.',
   },
   {
     degree: 'Diploma in Computer Engineering',
     school: 'VPMP Polytechnic, Gandhinagar',
-    years: '<YYYY> – <YYYY>',
+    years: '2023 – 2026',
     notes: 'Called best in class by faculty for focus and real understanding of code. Final-year project: Talk2Anyone, an AI ASL translator.',
   },
 ];
@@ -116,8 +116,8 @@ export const projects = [
     title: 'A Blocker',
     year: '',
     tags: ['Browser extension', 'AI'],
-    description: 'A browser extension that spots and hides AI Content that ordinary filter lists miss.',
-    links: [{ label: 'GitHub', href: GITHUB }],
+    description: 'A vibecoded browser extension that spots and hides AI Generated Content that ordinary filter lists miss.',
+    links: [{ label: 'GitHub', href: "https://github.com/shamit-arch/AI-adblock" }],
     color: '#d0343a',
   },
   {
@@ -125,7 +125,7 @@ export const projects = [
     year: '',
     tags: ['Web app', 'Productivity'],
     description: 'A web interface that formats college practicals and assignments into clean, submission-ready documents in seconds.',
-    links: [{ label: 'GitHub', href: "https://github.com/shamit-arch/practical-submiter" }],
+    links: [{ label: 'GitHub', href: "https://github.com/shamit-arch/practical-submiter" },{ label : 'Live', href:"https://prf.patelshamit1911.workers.dev/"}],
     color: '#2aa198',
   },
   {
@@ -133,6 +133,7 @@ export const projects = [
     year: '2026',
     tags: ['Three.js', 'GLSL', 'Vite'],
     description: 'This very portfolio: my real desk rebuilt as a pixel-art 3D scene, with a working mini OS on the laptop.',
+    link:[{label:'Github', href : "https://github.com/shamit-arch/portfolio"}],
     color: '#e0302f',
   },
 ];
