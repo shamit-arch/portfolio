@@ -1,17 +1,11 @@
-// The wall monitor's screen: a 160×90 pixel canvas with three animated modes.
-//   0 Overworld   – Minecraft-style world; sun, moon and sky follow the viewer's local time
-//   1 Focus timer – 25 min focus / 5 min break Pomodoro
-//   2 Sunset sail – a little sheep-headed ship at sunset
+// The wall monitor's screen: a 160×90 pixel canvas with hacker vibes.
+//   left  – a green terminal auto-typing my real workflow (Django, git, deploys), on a loop
+//   right – Matrix-style code rain over a live CPU graph
+//   top   – user@host bar and a ticking clock
 export const SCREEN_W = 160;
 export const SCREEN_H = 90;
 
-export const MODES = [
-  { name: 'Overworld', desc: 'A blocky little world. The sun and moon follow your local time.' },
-  { name: 'Focus timer', desc: '25 min deep focus, 5 min break. Click the screen to start or pause.' },
-  { name: 'Sunset sail', desc: 'Somewhere on the Grand Line, a sheep-headed ship sails into the evening.' },
-];
-
-// ── 3×5 pixel font ────────────────────────────────────────────
+// ── 3×5 pixel font (upper-case only; lower-case is drawn as upper) ──
 const GLYPHS = {
   A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110',
   E: '111100110100111', F: '111100110100100', G: '011100101101011', H: '101101111101101',
@@ -23,275 +17,160 @@ const GLYPHS = {
   0: '111101101101111', 1: '010110010010111', 2: '110001010100111', 3: '110001010001110',
   4: '101101111001001', 5: '111100110001110', 6: '011100111101111', 7: '111001010010010',
   8: '111101111101111', 9: '111101111001110',
-  ':': '000010000010000', '.': '000000000000010', '-': '000000111000000', ' ': '000000000000000',
+  ':': '000010000010000', '.': '000000000000010', ',': '000000000010100', '-': '000000111000000',
+  '_': '000000000000111', '/': '001001010100100', $: '011110010011110', '>': '100010001010100',
+  '<': '001010100010001', '@': '010101111100011', '~': '000000011110000', '=': '000111000111000',
+  '&': '010101010101011', '[': '110100100100110', ']': '011001001001011', '(': '010100100100010',
+  ')': '010001001001010', '*': '000101010101000', '!': '010010010000010', '?': '110001010000010',
+  '%': '101001010100101', '+': '000010111010000', '|': '010010010010010', '#': '101111101111101',
+  "'": '010010000000000', '"': '101101000000000', ' ': '000000000000000',
 };
 
-const pad2 = (n) => String(n).padStart(2, '0');
-const lerp = (a, b, t) => a + (b - a) * t;
-function mixHex(a, b, t) {
-  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
-  const c = (s) => Math.round(lerp((pa >> s) & 255, (pb >> s) & 255, t));
-  return `rgb(${c(16)},${c(8)},${c(0)})`;
+const G = {
+  bg: '#040a06', bar: '#0b2214', prompt: '#3dff7a', cmd: '#c8ffd8', out: '#36a35c',
+  ok: '#ffd23f', dim: '#14532b', head: '#e0ffe9', frame: '#1c6b3a',
+};
+
+// What the terminal "types". Each line fits the 24-char pane.
+const SCRIPT = [
+  { cmd: 'whoami', out: ['shamit patel', 'dev + artist + idea guy'] },
+  { cmd: 'cd talk2anyone', out: [] },
+  { cmd: 'py manage.py runserver', out: ['watching for changes...', 'serving on :8000  OK'] },
+  { cmd: 'git commit -am fix', out: ['[main 4f2a9c1] fix', '3 files changed'] },
+  { cmd: 'git push', out: ['github.com/shamit-arch', 'main -> main  OK'] },
+  { cmd: 'npm run build', out: ['built in 0.54s  OK'] },
+  { cmd: 'wrangler deploy', out: ['uploading 11 files...', 'live on the edge  OK'] },
+  { cmd: 'sqlite3 inventory.db', out: ['sqlite> select count(*)', '1284'] },
+  { cmd: 'ping gotham', out: ['reply from batsignal', 'time=1ms ttl=64'] },
+  { cmd: 'sudo make coffee', out: ['[sudo] password: ****', 'brewing...  OK'] },
+  { cmd: 'clear', out: [] },
+];
+const TYPE = 0.07; // seconds per typed character
+const STEPS = [];
+let LOOP = 0.8;
+for (const s of SCRIPT) {
+  STEPS.push({ kind: 'cmd', text: s.cmd, start: LOOP });
+  LOOP += s.cmd.length * TYPE + 0.35;
+  for (const o of s.out) {
+    STEPS.push({ kind: 'out', text: o, start: LOOP });
+    LOOP += 0.22;
+  }
+  LOOP += s.cmd === 'clear' ? 0.25 : 0.9;
 }
-// tiny deterministic hash for terrain / stars
+
+const pad2 = (n) => String(n).padStart(2, '0');
 const hash = (n) => {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
 };
+const RAIN_CHARS = '0110ABCDEF7$#%*<>=+';
 
-export function createMonitorScreen({ ctx, texture, onTimerEnd }) {
+export function createMonitorScreen({ ctx, texture }) {
   const W = SCREEN_W, H = SCREEN_H;
-  let mode = 0;
   let lastDraw = -1;
 
-  const px = (x, y, w, h, col) => {
+  const rect = (x, y, w, h, col) => {
     ctx.fillStyle = col;
     ctx.fillRect(Math.round(x), Math.round(y), w, h);
   };
-  function textWidth(str, s = 1) {
-    return str.length * 4 * s - s;
-  }
-  function text(str, x, y, col, s = 1, shadow) {
-    if (shadow) text(str, x + Math.min(s, 2), y + Math.min(s, 2), shadow, s);
+  function text(str, x, y, col) {
+    ctx.fillStyle = col;
     [...str.toUpperCase()].forEach((ch, i) => {
       const g = GLYPHS[ch] || GLYPHS[' '];
-      for (let j = 0; j < 15; j++) if (g[j] === '1') px(x + i * 4 * s + (j % 3) * s, y + Math.floor(j / 3) * s, s, s, col);
+      for (let j = 0; j < 15; j++) if (g[j] === '1') ctx.fillRect(Math.round(x + i * 4 + (j % 3)), Math.round(y + Math.floor(j / 3)), 1, 1);
     });
   }
-  const clockStr = (d = new Date()) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 
-  // ── Pomodoro state (keeps running whatever mode is on screen) ──
-  const FOCUS = 25 * 60, BREAK = 5 * 60;
-  const timer = { phase: 'focus', total: FOCUS, left: FOCUS, running: false, last: 0 };
-  function tickTimer() {
-    const now = performance.now();
-    if (timer.running) {
-      timer.left -= (now - timer.last) / 1000;
-      if (timer.left <= 0) {
-        const ended = timer.phase;
-        timer.phase = ended === 'focus' ? 'break' : 'focus';
-        timer.total = timer.left = timer.phase === 'focus' ? FOCUS : BREAK;
-        onTimerEnd?.(ended);
+  // ── left: terminal ──────────────────────────────────────────
+  function drawTerminal(t) {
+    const now = t % LOOP;
+    const lines = [];
+    for (const s of STEPS) {
+      if (s.start > now) break;
+      if (s.kind === 'cmd') lines.push({ kind: 'cmd', text: s.text.slice(0, Math.floor((now - s.start) / TYPE)) });
+      else lines.push({ kind: 'out', text: s.text });
+    }
+    if (!lines.length || lines[lines.length - 1].kind === 'out') lines.push({ kind: 'cmd', text: '' });
+    const ROWS = 13, x0 = 3, y0 = 11;
+    const shown = lines.slice(-ROWS);
+    shown.forEach((l, i) => {
+      const y = y0 + i * 6;
+      if (l.kind === 'cmd') {
+        text('$', x0, y, G.prompt);
+        text(l.text, x0 + 8, y, G.cmd);
+      } else {
+        text(l.text, x0, y, G.out);
+        if (l.text.endsWith('OK')) text('OK', x0 + (l.text.length - 2) * 4, y, G.ok);
+      }
+    });
+    // blinking block cursor after the last line
+    if (Math.floor(t * 2.5) % 2 === 0) {
+      const last = shown[shown.length - 1];
+      rect(x0 + 8 + last.text.length * 4, y0 + (shown.length - 1) * 6, 3, 5, G.prompt);
+    }
+  }
+
+  // ── right: code rain + CPU graph ────────────────────────────
+  function drawRain(t) {
+    const x0 = 104, top = 9, bottom = 58;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0, top, W - x0, bottom - top);
+    ctx.clip();
+    for (let c = 0; c < 11; c++) {
+      const speed = 10 + hash(c) * 22;
+      const head = ((t * speed + hash(c + 5) * 120) % 90) + top - 10;
+      for (let k = 0; k < 9; k++) {
+        const y = Math.round((head - k * 6) / 6) * 6;
+        if (y < top - 5 || y > bottom) continue;
+        const idx = Math.floor(hash(c * 31 + Math.floor(y / 6) + Math.floor(t * (3 + (k === 0 ? 6 : 0)))) * RAIN_CHARS.length);
+        const col = k === 0 ? G.head : k < 3 ? G.prompt : k < 6 ? G.out : G.dim;
+        text(RAIN_CHARS[idx], x0 + 1 + c * 5, y, col);
       }
     }
-    timer.last = now;
+    ctx.restore();
   }
 
-  // ── mode 0: overworld ─────────────────────────────────────────
-  const COLS = W / 5; // 5px blocks
-  const heights = Array.from({ length: COLS }, (_, i) => Math.round(Math.sin(i * 0.33) * 1.6 + Math.sin(i * 0.9 + 1) * 0.8 + hash(i) * 0.6));
-  const SKY_KEYS = [
-    [0, '#070b24'], [4.5, '#0d1438'], [6, '#e9866a'], [7.5, '#7fb6ff'], [16.5, '#7fb6ff'],
-    [18.2, '#ff8a5a'], [19.5, '#2a2558'], [21, '#0b1030'], [24, '#070b24'],
-  ];
-  function skyAt(h) {
-    for (let i = 0; i < SKY_KEYS.length - 1; i++) {
-      const [h0, c0] = SKY_KEYS[i], [h1, c1] = SKY_KEYS[i + 1];
-      if (h >= h0 && h <= h1) return mixHex(c0, c1, (h - h0) / (h1 - h0));
+  function drawCpu(t) {
+    const x0 = 104, y0 = 61, w = W - x0 - 2, h = 27;
+    rect(x0, y0, w, 1, G.frame);
+    const n = Math.floor(t * 4);
+    const load = (i) => 0.25 + 0.45 * hash(i * 0.37) + 0.25 * Math.sin(i * 0.21);
+    const cur = Math.round(Math.max(3, Math.min(99, load(n) * 100)));
+    text('CPU', x0 + 1, y0 + 3, G.out);
+    text(`${cur}%`, x0 + w - `${cur}%`.length * 4, y0 + 3, cur > 70 ? G.ok : G.prompt);
+    const bars = Math.floor(w / 2);
+    for (let i = 0; i < bars; i++) {
+      const v = Math.max(0.05, Math.min(1, load(n - (bars - 1 - i))));
+      const bh = Math.round(v * 16);
+      rect(x0 + i * 2, y0 + h - bh, 1, bh, v > 0.7 ? G.ok : i === bars - 1 ? G.prompt : G.out);
     }
-    return SKY_KEYS[0][1];
   }
-  function drawOverworld(t) {
+
+  function draw(t) {
+    rect(0, 0, W, H, G.bg);
+    // top bar
+    rect(0, 0, W, 8, G.bar);
+    text('shamit@desk:~', 2, 2, G.prompt);
     const d = new Date();
-    const h = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
-    const night = h < 5.5 || h > 19.5 ? 1 : h < 7 ? 1 - (h - 5.5) / 1.5 : h > 18 ? (h - 18) / 1.5 : 0;
-    const sky = skyAt(h);
-    px(0, 0, W, H, sky);
-    for (let y = 0; y < 40; y += 4) px(0, y, W, 4, `rgba(0,0,0,${0.06 - y * 0.0015})`); // banded sky
-    // stars
-    if (night > 0.05) for (let i = 0; i < 40; i++) {
-      if (hash(i + 7) * 1.2 > night) continue;
-      const tw = hash(i + Math.floor(t * 1.5)) > 0.85 ? '#ffffff' : '#c9d4ff';
-      px(hash(i) * W, hash(i + 99) * 45, 1, 1, tw);
-    }
-    // square sun (6–18h) and moon (18–6h) on an arc
-    const sunP = (h - 6) / 12, moonP = (((h - 18) % 24) + 24) % 24 / 12;
-    const arc = (p) => [8 + p * (W - 24), 52 - Math.sin(p * Math.PI) * 42];
-    if (sunP >= 0 && sunP <= 1) {
-      const [x, y] = arc(sunP);
-      px(x - 1, y - 1, 10, 10, '#fff3a0');
-      px(x, y, 8, 8, '#ffe14d');
-    }
-    if (moonP >= 0 && moonP <= 1) {
-      const [x, y] = arc(moonP);
-      px(x, y, 8, 8, '#e8ecf4');
-      px(x + 2, y + 2, 2, 2, '#b9c0cf');
-      px(x + 5, y + 4, 2, 2, '#b9c0cf');
-    }
-    // drifting blocky clouds
-    const cloudCol = night > 0.5 ? 'rgba(180,190,220,0.35)' : 'rgba(255,255,255,0.9)';
-    for (let i = 0; i < 4; i++) {
-      const x = ((hash(i * 3) * 220 + t * (2 + i * 0.6)) % 220) - 40;
-      const y = 6 + i * 6;
-      px(x, y, 22 + i * 3, 4, cloudCol);
-      px(x + 5, y - 3, 12, 3, cloudCol);
-    }
-    // terrain
-    const base = 62;
-    for (let c = 0; c < COLS; c++) {
-      const top = base - heights[c] * 5;
-      const x = c * 5;
-      px(x, top, 5, 5, '#5fa53a');
-      px(x, top, 5, 1, '#79c24a');
-      if (hash(c + 3) > 0.5) px(x + 1, top + 3, 1, 2, '#7a5634');
-      px(x, top + 5, 5, 10, '#8b5e3c');
-      if (hash(c) > 0.6) px(x + 2, top + 8, 1, 1, '#6d4528');
-      for (let y = top + 15; y < H; y += 5) {
-        px(x, y, 5, 5, (c + y / 5) % 2 ? '#7b7b7b' : '#727272');
-        if (hash(c * 31 + y) > 0.93) px(x + 1, y + 1, 2, 2, hash(c + y) > 0.5 ? '#3a3a3a' : '#5ad1e6'); // coal / diamond
-      }
-    }
-    const groundAt = (col) => base - heights[col] * 5;
-    // trees
-    for (const c of [4, 19]) {
-      const g = groundAt(c), x = c * 5;
-      px(x + 1, g - 15, 3, 15, '#6b4a2b');
-      px(x - 5, g - 25, 15, 10, '#2f7d32');
-      px(x, g - 30, 5, 5, '#2f7d32');
-      px(x - 4, g - 24, 2, 2, '#3f9a42');
-    }
-    // little plank house
-    {
-      const c = 25, g = groundAt(c), x = c * 5;
-      px(x, g - 15, 20, 15, '#b8915a');
-      for (let r = 0; r < 3; r++) px(x, g - 15 + r * 5, 20, 1, '#9a7744');
-      px(x + 3, g - 10, 4, 10, '#6b4a2b');
-      px(x + 11, g - 11, 5, 4, night > 0.4 ? '#ffd56a' : '#a8d8ff');
-      px(x - 2, g - 18, 24, 3, '#7a4b2a');
-      px(x + 2, g - 21, 16, 3, '#7a4b2a');
-    }
-    // a tiny explorer walking back and forth
-    {
-      const span = 70, pos = (t * 6) % (span * 2);
-      const x = 40 + (pos < span ? pos : span * 2 - pos);
-      const g = groundAt(Math.floor((x + 2) / 5));
-      const step = Math.floor(t * 4) % 2;
-      px(x, g - 9, 3, 3, '#c69c72');
-      px(x, g - 9, 3, 1, '#4a2f1a');
-      px(x, g - 6, 3, 3, '#2fa3b6');
-      px(x + (step ? 0 : 1), g - 3, 1, 3, '#3a3f8f');
-      px(x + (step ? 2 : 1), g - 3, 1, 3, '#3a3f8f');
-    }
-    if (night > 0) px(0, 0, W, H, `rgba(8,12,40,${night * 0.45})`);
-    const clk = clockStr(d);
-    text(clk, W - textWidth(clk, 2) - 4, 4, '#ffffff', 2, 'rgba(0,0,0,0.5)');
+    const clock = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    text(clock, W - clock.length * 4 - 1, 2, G.cmd);
+    rect(101, 9, 1, H - 9, G.frame); // pane divider
+    drawTerminal(t);
+    drawRain(t);
+    drawCpu(t);
+    // CRT scanlines + a faint flicker
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    for (let y = 1; y < H; y += 2) ctx.fillRect(0, y, W, 1);
+    if (hash(Math.floor(t * 12)) > 0.94) rect(0, 0, W, H, 'rgba(61,255,122,0.05)');
   }
-
-  // ── mode 1: focus timer ──────────────────────────────────────
-  function drawTimer(t) {
-    const focus = timer.phase === 'focus';
-    px(0, 0, W, H, focus ? '#1b1633' : '#12322a');
-    for (let y = 0; y < H; y += 6) for (let x = (y / 6) % 2 ? 3 : 0; x < W; x += 6) px(x, y, 1, 1, focus ? '#2a2350' : '#1d4a3d');
-    // pixel tomato
-    px(8, 9, 10, 9, '#e0453a');
-    px(9, 8, 8, 11, '#e0453a');
-    px(10, 10, 3, 2, '#ff8a7a');
-    px(12, 6, 2, 3, '#3f9a42');
-    px(10, 7, 6, 1, '#3f9a42');
-    const label = timer.running ? (focus ? 'DEEP FOCUS' : 'BREAK TIME') : timer.left === timer.total ? 'READY' : 'PAUSED';
-    text(label, 24, 10, focus ? '#f2b233' : '#7fe0b0', 1);
-    const secs = Math.max(0, Math.ceil(timer.left));
-    const str = `${pad2(Math.floor(secs / 60))}:${pad2(secs % 60)}`;
-    const blinkOff = !timer.running && timer.left !== timer.total && Math.floor(t * 2) % 2;
-    if (!blinkOff) text(str, (W - textWidth(str, 6)) / 2, 26, '#ffffff', 6, focus ? '#5a3fb0' : '#2f8a66');
-    // progress bar
-    const p = 1 - timer.left / timer.total;
-    px(16, 70, W - 32, 6, '#0b0a18');
-    px(17, 71, Math.round((W - 34) * p), 4, focus ? '#f2b233' : '#7fe0b0');
-    const hint = timer.running ? 'CLICK TO PAUSE' : 'CLICK TO START';
-    text(hint, (W - textWidth(hint)) / 2, 80, '#8c86b0');
-    const clk = clockStr();
-    text(clk, W - textWidth(clk) - 4, 4, '#8c86b0');
-  }
-
-  // ── mode 2: sunset sail ──────────────────────────────────────
-  const SHIP = [
-    '.............k........',
-    '.............kkk......',
-    '.............m........',
-    '........wwwwwwwwww....',
-    '........wwwwwwwwww....',
-    '........wwwwwwwwww....',
-    '........wwwwwwwwww....',
-    '.........wwwwwwww.....',
-    '.............m........',
-    '.............m........',
-    '..hh.........m......ss',
-    '..hhhhhhhhhhhhhhhhhssk',
-    '..hhhhhhhhhhhhhhhhhsss',
-    '...HHHHHHHHHHHHHHHHss.',
-    '....HHHHHHHHHHHHHHH...',
-  ];
-  const SHIP_COL = { k: '#1a1410', m: '#4a2f1a', w: '#fff4dc', h: '#a8703a', H: '#6e4522', s: '#fbf6ea' };
-  const SKY_BANDS = ['#2b1d4a', '#4d2a63', '#82356b', '#c4485f', '#ee7a4a', '#f7b35a', '#fbe08a'];
-  function drawSail(t) {
-    const horizon = 52;
-    SKY_BANDS.forEach((c, i) => px(0, (i * horizon) / SKY_BANDS.length, W, Math.ceil(horizon / SKY_BANDS.length) + 1, c));
-    // sun sitting on the horizon
-    for (let y = -12; y <= 0; y++) {
-      const w = Math.round(Math.sqrt(144 - y * y));
-      px(112 - w, horizon + y, w * 2, 1, y > -3 ? '#ffe9a0' : '#fff2b8');
-    }
-    // sea
-    for (let y = horizon; y < H; y++) px(0, y, W, 1, mixHex('#3a3f7a', '#141a3c', (y - horizon) / (H - horizon)));
-    for (let i = 0; i < 46; i++) {
-      const y = horizon + 2 + Math.floor(hash(i) * (H - horizon - 3));
-      const x = (hash(i + 50) * W + t * (6 + (y - horizon) * 0.5)) % (W + 20) - 10;
-      const nearSun = Math.abs(x - 112) < 12 + (y - horizon) * 0.4;
-      px(x, y, 3 + Math.floor(hash(i + 9) * 6), 1, nearSun && hash(i + Math.floor(t * 3)) > 0.3 ? '#ffd27a' : '#5560a8');
-    }
-    // the ship, bobbing
-    const bob = Math.round(Math.sin(t * 1.6) * 1.2);
-    const sx = 30 + Math.sin(t * 0.2) * 6, sy = horizon - 11 + bob;
-    SHIP.forEach((row, y) => [...row].forEach((ch, x) => ch !== '.' && px(sx + x * 2, sy - 10 + y * 2, 2, 2, SHIP_COL[ch])));
-    px(sx + 4, sy + 20, 40, 1, '#2a2f66'); // shadow line on the water
-    // gulls
-    for (let i = 0; i < 3; i++) {
-      const gx = ((t * (8 + i * 2) + i * 60) % (W + 30)) - 15;
-      const gy = 14 + i * 7 + Math.sin(t * 2 + i) * 2;
-      const up = Math.floor(t * 4 + i) % 2;
-      px(gx, gy, 1, 1, '#2b1d2a');
-      px(gx + 1, gy + (up ? -1 : 1), 1, 1, '#2b1d2a');
-      px(gx + 2, gy, 1, 1, '#2b1d2a');
-      px(gx + 3, gy + (up ? -1 : 1), 1, 1, '#2b1d2a');
-      px(gx + 4, gy, 1, 1, '#2b1d2a');
-    }
-  }
-
-  const DRAW = [drawOverworld, drawTimer, drawSail];
 
   return {
     draw(t) {
-      tickTimer();
-      if (t - lastDraw < 1 / 12) return;
+      if (t - lastDraw < 1 / 15) return;
       lastDraw = t;
-      DRAW[mode](t);
+      draw(t);
       texture.needsUpdate = true;
-    },
-    next(dir = 1) {
-      mode = (mode + dir + DRAW.length) % DRAW.length;
-      lastDraw = -1;
-      return mode;
-    },
-    get mode() {
-      return mode;
-    },
-    timer: {
-      toggle() {
-        timer.running = !timer.running;
-        timer.last = performance.now();
-        lastDraw = -1;
-        return timer.running;
-      },
-      reset() {
-        timer.running = false;
-        timer.phase = 'focus';
-        timer.total = timer.left = FOCUS;
-        lastDraw = -1;
-      },
-      get running() {
-        return timer.running;
-      },
     },
   };
 }

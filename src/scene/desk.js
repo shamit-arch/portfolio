@@ -158,19 +158,9 @@ export function buildDesk(scene) {
   const monScreen = new THREE.Mesh(new THREE.PlaneGeometry(SCR_W, SCR_H), new THREE.MeshBasicMaterial({ map: monTex }));
   monScreen.position.set(0, (CHIN - TOP) / 2, 0.0062);
   monitor.add(monScreen);
-  const [logoCanvas, logoCtx] = canvas(96, 12);
-  logoCtx.fillStyle = '#151619';
-  logoCtx.fillRect(0, 0, 96, 12);
-  logoCtx.fillStyle = '#9a9ca4';
-  logoCtx.font = 'bold 9px Arial, sans-serif';
-  logoCtx.textAlign = 'center';
-  logoCtx.fillText('ZEBRONICS', 48, 9);
-  const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.072, 0.009), new THREE.MeshBasicMaterial({ map: toTexture(logoCanvas) }));
-  logo.position.set(0, -(SCR_H + TOP + CHIN) / 2 + CHIN / 2, 0.0062);
-  monitor.add(logo);
   monitor.scale.setScalar(1.3); // ~15.6" portable monitor, ends just left of the socket
   monitor.position.set(-0.105, 1.115, WALL_Z + 0.009);
-  scene.add(register(monitor, 'monitor', 'Monitor — click to switch'));
+  scene.add(register(monitor, 'monitor', 'Monitor — terminal'));
   // USB-C cable from the monitor's left edge down behind the laptop
   scene.add(tube([[-0.33, 1.0, -0.344], [-0.35, 0.95, -0.335], [-0.3, 0.85, -0.33], [-0.21, 0.772, -0.3], [-0.14, 0.758, -0.2], [-0.12, 0.764, -0.1]], 0.004, cableMat));
 
@@ -331,12 +321,13 @@ export function buildDesk(scene) {
   hat.add(dome);
   hat.add(cyl(0.0985, 0.1, 0.028, 22, red, 0, 0.02, 0));
   const hatPivot = new THREE.Group();
-  hat.rotation.x = Math.PI / 2;
+  hat.rotation.x = Math.PI / 2; // crown along the pivot's +z
   hatPivot.add(hat);
-  hatPivot.position.set(-0.86, 1.36, 0.36);
-  hatPivot.rotation.z = 0.12;
+  // hangs flat on the inner side wall of the left pillar, crown facing into the nook (as in the photos)
+  hatPivot.position.set(-0.8, 1.44, 0.12);
+  hatPivot.rotation.set(0, Math.PI / 2, 0);
   scene.add(register(hatPivot, 'hat', 'Straw hat — anime log'));
-  scene.add(box(0.012, 0.012, 0.04, toon({ color: '#888' }), -0.86, 1.42, 0.355));
+  scene.add(box(0.03, 0.01, 0.01, toon({ color: '#888' }), -0.795, 1.5, 0.12)); // nail, hidden behind the crown
 
   return {
     interactive,

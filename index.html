@@ -34,7 +34,6 @@
     <div id="gallery-ui" class="panel" hidden></div>
     <div id="anime-ui" class="panel" hidden></div>
     <div id="notebook-ui" class="panel" hidden></div>
-    <div id="monitor-ui" class="panel" hidden></div>
     <div id="os" hidden></div>
 
     <div id="intro">
@@ -80,14 +79,25 @@
               <path d="M150 140 L312 80 L322 113 Z" fill="#f6c33a" />
               <ellipse cx="325" cy="96" rx="24" ry="18" fill="#f3e98a" />
               <path d="M310 96 l6 -4 l2 3 l3 -6 l2 4 h4 l2 -4 l3 6 l2 -3 l6 4 l-4 5 l-4 -2 l-3 5 l-3 -3 l-3 3 l-3 -5 l-4 2 Z" fill="#14161c" />
-              <ellipse cx="60" cy="165" rx="34" ry="36" fill="#e8cf9a" />
-              <ellipse cx="60" cy="165" rx="19" ry="20" fill="none" stroke="#c8262c" stroke-width="6" />
+              <ellipse cx="78" cy="152" rx="10" ry="40" fill="#e8cf9a" />
+              <path d="M81 130 C 106 134, 106 170, 81 174 Z" fill="#e8cf9a" />
+              <path d="M84 137 C 98 142, 98 162, 84 167" fill="none" stroke="#c8262c" stroke-width="5" />
               <path d="M75 275 L95 240 L385 240 L405 275 Z" fill="#b9bfc2" opacity="0.6" />
               <path d="M110 262 C110 226 160 226 160 262" fill="none" stroke="#2c3b66" stroke-width="5" />
               <ellipse cx="110" cy="264" rx="11" ry="6" fill="#2c3b66" />
               <ellipse cx="160" cy="264" rx="11" ry="6" fill="#2c3b66" />
               <path d="M190 250 L290 250 L296 268 L184 268 Z" fill="#2a2b30" />
               <path d="M20 20 L70 20 L70 350 L20 350 Z M410 20 L460 20 L460 350 L410 350 Z" fill="#d9a46b" opacity="0.55" />
+              <rect x="168" y="160" width="96" height="58" rx="3" fill="#1d1f24" />
+              <rect x="172" y="164" width="88" height="44" fill="#0b1d12" />
+            </g>
+
+            <!-- the wall monitor's terminal: clean vector strokes (no pixel text), fades in with the colour -->
+            <g class="ink-glow" fill="none" stroke-linecap="round">
+              <path d="M178 171 h4 M186 171 h20 M178 178 h30 M178 185 h4 M186 185 h26 M178 192 h22 M178 199 h4" stroke="#4dff8a" stroke-width="2" />
+              <path d="M186 199 h5" stroke="#c8ffd8" stroke-width="3" />
+              <path d="M232 167 v38" stroke="#1f7a43" stroke-width="1" />
+              <path d="M238 169 v4 M238 180 v6 M244 174 v7 M244 189 v4 M250 168 v5 M250 182 v8 M256 172 v6 M256 186 v5 M241 195 v6 M253 197 v5" stroke="#4dff8a" stroke-width="2" opacity="0.85" />
             </g>
 
             <!-- pencil lines; --d = start delay, --t = duration -->
@@ -106,9 +116,14 @@
               <ellipse class="ln" pathLength="1" style="--d:1.1s" cx="325" cy="96" rx="24" ry="18" />
               <path class="ln" pathLength="1" style="--d:1.1s;--t:.9s" d="M127 146 v-8 h6 v-6 h7 v10 h5 v-14 h6 v18 M207 146 v-10 h8 v-5 h6 v15 h7 v-12 h6 v12 M287 146 v-6 h7 v-10 h6 v16 h8 v-8 h6 v8" />
 
-              <ellipse class="ln" pathLength="1" style="--d:1.3s" cx="60" cy="165" rx="34" ry="36" />
-              <ellipse class="ln" pathLength="1" style="--d:1.45s;--t:.4s" cx="60" cy="165" rx="19" ry="20" />
-              <ellipse class="ln" pathLength="1" style="--d:1.55s;--t:.4s" cx="60" cy="165" rx="14" ry="15" />
+              <rect class="ln" pathLength="1" style="--d:1.2s;--t:.5s" x="168" y="160" width="96" height="58" rx="3" />
+              <rect class="ln" pathLength="1" style="--d:1.35s;--t:.4s" x="172" y="164" width="88" height="44" />
+              <path class="ln" pathLength="1" style="--d:1.95s;--t:.5s" d="M171 214 C 156 226, 166 240, 200 240" />
+
+              <!-- straw hat hanging on the left pillar's inner side, seen at an angle -->
+              <ellipse class="ln" pathLength="1" style="--d:1.3s" cx="78" cy="152" rx="10" ry="40" />
+              <path class="ln" pathLength="1" style="--d:1.45s;--t:.4s" d="M81 130 C 106 134, 106 170, 81 174" />
+              <path class="ln" pathLength="1" style="--d:1.55s;--t:.4s" d="M84 137 C 98 142, 98 162, 84 167" />
 
               <path class="ln" pathLength="1" style="--d:1.5s" d="M75 275 L95 240 L385 240 L405 275 Z M75 275 L75 284 L405 284 L405 275" />
               <path class="ln" pathLength="1" style="--d:1.7s;--t:.5s" d="M85 284 L85 345 M395 284 L395 345 M240 284 L240 345 M85 316 L395 316" />

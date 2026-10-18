@@ -4,7 +4,7 @@ import * as content from './content.js';
 import { buildDesk, WALL_Z, LAPTOP_SCALE } from './scene/desk.js';
 import { paintingCanvas, blankCanvas } from './scene/paintings.js';
 import { PixelPass } from './fx/pixelPass.js';
-import { createMonitorScreen, MODES as MONITOR_MODES } from './scene/monitor.js';
+import { createMonitorScreen } from './scene/monitor.js';
 import { createOS } from './ui/os.js';
 import { createGallery, createAnimeLog, createNotebook, createPlain } from './ui/panels.js';
 import { sfx, music, setMuted, isMuted } from './audio.js';
@@ -45,7 +45,7 @@ glow.position.set(0.3, 1.6, -0.15);
 scene.add(glow);
 const screenLight = new THREE.PointLight('#8fd0ff', 0, 0.8, 1.5);
 scene.add(screenLight);
-const monitorGlow = new THREE.PointLight('#9fc4ff', 0, 0.9, 1.5); // the wall monitor lights the wall at night
+const monitorGlow = new THREE.PointLight('#5dff9a', 0, 0.9, 1.5); // the wall monitor lights the wall at night
 monitorGlow.position.copy(desk.monitor.group.position).add(new THREE.Vector3(0, 0, 0.12));
 scene.add(monitorGlow);
 
@@ -144,8 +144,9 @@ function fitDistance(halfW, halfH) {
   return Math.max(halfH / t, halfW / (t * camera.aspect));
 }
 function homeView() {
-  const d = fitDistance(camera.aspect < 0.8 ? 0.92 : 1.12, 0.74);
-  return { pos: new THREE.Vector3(0, 1.48, 0.0 + d), target: new THREE.Vector3(0, 1.2, 0.0) };
+  // aimed a little higher and framed taller so the under-cabinet lamp stays well inside the top edge
+  const d = fitDistance(camera.aspect < 0.8 ? 0.92 : 1.12, 0.8);
+  return { pos: new THREE.Vector3(0, 1.45, 0.0 + d), target: new THREE.Vector3(0, 1.33, 0.0) };
 }
 function paintingView() {
   const p = desk.painting;
@@ -191,9 +192,8 @@ function notebookView() {
 
 function monitorView() {
   const center = desk.monitor.screen.getWorldPosition(new THREE.Vector3());
-  const narrow = camera.aspect < 0.9;
-  const target = center.clone().add(new THREE.Vector3(0, narrow ? -0.08 : -0.045, 0));
-  const d = fitDistance(0.168 * 1.3 * 1.25, narrow ? 0.26 : 0.21);
+  const target = center.clone();
+  const d = fitDistance(0.168 * 1.3 * 1.15, 0.095 * 1.3 * 1.25);
   return { pos: target.clone().add(new THREE.Vector3(0, 0, d)), target };
 }
 
@@ -212,7 +212,6 @@ function flyTo(viewFn, dur = 1.1) {
 const ui = {
   back: $('#back'), hint: $('#hint'), tooltip: $('#tooltip'), toast: $('#toast'),
   gallery: $('#gallery-ui'), anime: $('#anime-ui'), notebook: $('#notebook-ui'), os: $('#os'),
-  monitor: $('#monitor-ui'),
 };
 $('#hud-name').textContent = content.profile.name;
 $('#hud-title').textContent = content.profile.title;
@@ -273,7 +272,6 @@ async function goHome() {
   sfx('close');
   if (was === 'painting') hidePanel(ui.gallery);
   if (was === 'notebook') hidePanel(ui.notebook);
-  if (was === 'monitor') hidePanel(ui.monitor);
   if (was === 'hat') {
     hidePanel(ui.anime);
     returnHat();
@@ -352,25 +350,33 @@ function updateOsRect() {
 
 // hat
 const hat = desk.hat;
+let hatFloating = false; // true once the hat has come off the wall and turned to face the camera
 async function enterHat() {
   setMode('hat');
   sfx('open');
   const p0 = hat.pivot.position.clone();
-  const r0 = hat.pivot.rotation.z;
+  const r0 = hat.pivot.rotation.clone();
+  const L = THREE.MathUtils.lerp;
+  // lift off the side wall, swing round to face the camera, spinning on the way
   tween(reduceMotion ? 0.01 : 1.0, (e) => {
     hat.pivot.position.lerpVectors(p0, HAT_OUT, e);
     hat.pivot.position.y += Math.sin(e * Math.PI) * 0.12;
-    hat.pivot.rotation.z = THREE.MathUtils.lerp(r0, 0, e) + e * Math.PI * 2;
-  }, () => (hat.pivot.rotation.z = 0), 'out');
+    hat.pivot.rotation.set(L(r0.x, 0, e), L(r0.y, 0, e), L(r0.z, 0, e) + e * Math.PI * 2);
+  }, () => {
+    hat.pivot.rotation.set(0, 0, 0);
+    hatFloating = mode === 'hat';
+  }, 'out');
   await flyTo(hatView);
   if (mode === 'hat') showPanel(ui.anime);
 }
 function returnHat() {
+  hatFloating = false;
   const p0 = hat.pivot.position.clone();
-  const ry = hat.pivot.rotation.y, rx = hat.pivot.rotation.x;
+  const r0 = hat.pivot.rotation.clone();
+  const L = THREE.MathUtils.lerp;
   tween(reduceMotion ? 0.01 : 0.9, (e) => {
     hat.pivot.position.lerpVectors(p0, hat.home, e);
-    hat.pivot.rotation.set(rx * (1 - e), ry * (1 - e), hat.homeRot.z * e);
+    hat.pivot.rotation.set(L(r0.x, hat.homeRot.x, e), L(r0.y, hat.homeRot.y, e), L(r0.z, hat.homeRot.z, e));
   }, null, 'inOut');
 }
 
@@ -381,57 +387,12 @@ async function enterNotebook() {
   if (mode === 'notebook') showPanel(ui.notebook);
 }
 
-// wall monitor
-const monitorScreen = createMonitorScreen({
-  ctx: desk.monitor.ctx,
-  texture: desk.monitor.texture,
-  onTimerEnd: (phase) => {
-    sfx('chime');
-    toast(phase === 'focus' ? 'Focus session done! Take a 5 minute break.' : 'Break over. Back to deep focus.');
-    renderMonitorUI();
-  },
-});
-function renderMonitorUI() {
-  const m = monitorScreen.mode;
-  ui.monitor.querySelector('.gal-count').textContent = `MODE ${m + 1} / ${MONITOR_MODES.length}`;
-  ui.monitor.querySelector('.gal-title').textContent = MONITOR_MODES[m].name;
-  ui.monitor.querySelector('.gal-meta').textContent = MONITOR_MODES[m].desc;
-  const actions = ui.monitor.querySelector('.mon-actions');
-  actions.hidden = m !== 1;
-  actions.querySelector('[data-t="toggle"]').textContent = monitorScreen.timer.running ? 'Pause' : 'Start';
-}
-ui.monitor.innerHTML = `
-  <button class="gal-arrow" data-m="-1" aria-label="Previous screen">◀</button>
-  <div class="gal-info">
-    <div class="gal-count"></div>
-    <h2 class="gal-title"></h2>
-    <div class="gal-meta"></div>
-    <div class="mon-actions" hidden>
-      <button data-t="toggle">Start</button><button data-t="reset">Reset</button>
-    </div>
-  </div>
-  <button class="gal-arrow" data-m="1" aria-label="Next screen">▶</button>`;
-ui.monitor.addEventListener('click', (e) => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  if (b.dataset.m) monitorScreen.next(+b.dataset.m);
-  if (b.dataset.t === 'toggle') monitorScreen.timer.toggle();
-  if (b.dataset.t === 'reset') monitorScreen.timer.reset();
-  sfx('click');
-  renderMonitorUI();
-});
-renderMonitorUI();
+// wall monitor: a hacker-style terminal + code rain; clicking only zooms in
+const monitorScreen = createMonitorScreen({ ctx: desk.monitor.ctx, texture: desk.monitor.texture });
 async function enterMonitor() {
   setMode('monitor');
   sfx('open');
   await flyTo(monitorView);
-  if (mode === 'monitor') showPanel(ui.monitor);
-}
-function clickMonitor() {
-  if (monitorScreen.mode === 1) monitorScreen.timer.toggle();
-  else monitorScreen.next();
-  sfx('click');
-  renderMonitorUI();
 }
 
 let night = false;
@@ -467,7 +428,6 @@ function onObject(id, hit) {
     return gallery.next();
   }
   if (mode === 'laptop' && hit?.object.userData.power) return os.boot();
-  if (mode === 'monitor' && id === 'monitor') return clickMonitor();
   if (mode !== 'home') return;
   switch (id) {
     case 'painting': return enterPainting();
@@ -534,7 +494,6 @@ function allowedHover(hit) {
   if (mode === 'home') return id;
   if (mode === 'painting' && id === 'painting') return id;
   if (mode === 'laptop' && hit.object.userData.power && os.state === 'off') return id;
-  if (mode === 'monitor' && id === 'monitor') return id;
   return null;
 }
 
@@ -562,10 +521,6 @@ ui.back.addEventListener('click', goHome);
 addEventListener('keydown', (e) => {
   if (e.target.closest?.('input, textarea')) return;
   if (e.key === 'Escape' && mode !== 'home' && mode !== 'intro') goHome();
-  if (mode === 'monitor' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
-    monitorScreen.next(e.key === 'ArrowRight' ? 1 : -1);
-    renderMonitorUI();
-  }
   if (mode === 'painting' && e.key === 'ArrowRight') gallery.next();
   if (mode === 'painting' && e.key === 'ArrowLeft') gallery.prev();
 });
@@ -673,7 +628,7 @@ function frame() {
   dust.visible = mode === 'home' || mode === 'intro';
   dust.material.opacity = night ? 0.15 : 0.7;
 
-  if (mode === 'hat' && !reduceMotion) {
+  if (mode === 'hat' && hatFloating && !reduceMotion) {
     hat.pivot.rotation.y = Math.sin(t * 0.8) * 0.45;
     hat.pivot.rotation.x = Math.sin(t * 1.1) * 0.12;
     hat.pivot.position.y = HAT_OUT.y + Math.sin(t * 1.6) * 0.015;
