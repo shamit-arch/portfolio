@@ -12,6 +12,10 @@
   --px-border: 0 -4px 0 0 var(--ink), 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink);
 }
 
+.plinks, .more { margin-top: 2px; font-size: 9pt; color: var(--muted); }
+.plinks a, .more a { color: var(--accent); font-weight: 600; }
+
+
 * { box-sizing: border-box; }
 html, body {
   margin: 0;

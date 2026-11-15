@@ -1,11 +1,29 @@
-import './resume.css';
-import { profile, contact, education, experience, projects, resume } from './content.js';
+import "./resume.css";
+import {
+  profile,
+  contact,
+  education,
+  experience,
+  projects,
+  resume,
+} from "./content.js";
 
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const role = profile.title.split('·').filter((t) => !/student/i.test(t)).join('·').trim();
+const esc = (s) =>
+  String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+const role = profile.title
+  .split("·")
+  .filter((t) => !/student/i.test(t))
+  .join("·")
+  .trim();
 document.title = `${profile.name} — Resume`;
 
-document.getElementById('resume').innerHTML = `
+document.getElementById("resume").innerHTML = `
   <header>
     <div>
       <h1>${esc(profile.name)}</h1>
@@ -13,7 +31,7 @@ document.getElementById('resume').innerHTML = `
     </div>
     <ul class="links">
       <li>${esc(profile.location)}</li>
-      ${contact.map((c) => `<li><a href="${esc(c.href)}">${esc(c.value)}</a></li>`).join('')}
+      ${contact.map((c) => `<li><a href="${esc(c.href)}">${esc(c.value)}</a></li>`).join("")}
     </ul>
   </header>
 
@@ -24,37 +42,52 @@ document.getElementById('resume').innerHTML = `
 
   <section>
     <h2>Experience</h2>
-    ${experience.map((x) => `
+    ${experience
+      .map(
+        (x) => `
       <div class="item">
         <div class="row"><h3>${esc(x.role)}</h3><span class="when">${esc(x.years)}</span></div>
         <div class="sub">${esc(x.org)}</div>
-        <ul>${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
-      </div>`).join('')}
+        <ul>${x.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+      </div>`,
+      )
+      .join("")}
   </section>
 
   <section>
     <h2>Projects</h2>
-    ${projects.filter((p) => p.onResume !== false).map((p) => `
+    ${projects
+      .filter((p) => p.onResume !== false)
+      .map(
+        (p) => `
       <div class="item compact">
-        <div class="row"><h3>${esc(p.title)} <span class="tags">${esc((p.tags || []).join(' · '))}</span></h3><span class="when">${esc(p.year)}</span></div>
+        <div class="row"><h3>${esc(p.title)} <span class="tags">${esc((p.tags || []).join(" · "))}</span></h3><span class="when">${esc(p.year)}</span></div>
         <p>${esc(p.description)}</p>
-      </div>`).join('')}
+        ${(p.links || []).length ? `<p class="plinks">${p.links.map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join(" · ")}</p>` : ""}
+      </div>`,
+      )
+      .join("")}
+      <p class="more">More projects on <a href="https://github.com/shamit-arch">GitHub</a> and the <a href="./">portfolio desk</a>.</p>
   </section>
 
   <section>
     <h2>Education</h2>
-    ${education.map((e) => `
+    ${education
+      .map(
+        (e) => `
       <div class="item compact">
         <div class="row"><h3>${esc(e.degree)}</h3><span class="when">${esc(e.years)}</span></div>
         <div class="sub">${esc(e.school)}</div>
-        ${e.notes ? `<p>${esc(e.notes)}</p>` : ''}
-      </div>`).join('')}
+        ${e.notes ? `<p>${esc(e.notes)}</p>` : ""}
+      </div>`,
+      )
+      .join("")}
   </section>
 
   <section class="grid">
     <div>
       <h2>Skills</h2>
-      <dl>${resume.skillGroups.map((g) => `<dt>${esc(g.name)}</dt><dd>${esc(g.items.join(', '))}</dd>`).join('')}</dl>
+      <dl>${resume.skillGroups.map((g) => `<dt>${esc(g.name)}</dt><dd>${esc(g.items.join(", "))}</dd>`).join("")}</dl>
     </div>
     <div>
       <h2>Beyond code</h2>
@@ -62,4 +95,6 @@ document.getElementById('resume').innerHTML = `
     </div>
   </section>`;
 
-document.getElementById('print').addEventListener('click', () => window.print());
+document
+  .getElementById("print")
+  .addEventListener("click", () => window.print());
